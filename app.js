@@ -737,10 +737,18 @@
 
   app.addEventListener("input", (e) => {
     if (e.target.id === "draft") {
+      // Onthoud waar de cursor stond voordat het scherm opnieuw wordt opgebouwd.
+      // Zonder deze stap springt de cursor terug naar het begin en worden nieuwe
+      // letters telkens vóór de bestaande tekst geplaatst.
+      const cursorPosition = e.target.selectionStart ?? e.target.value.length;
+
       state.draftWord = e.target.value.toLowerCase();
       state.missingGraphemes.clear();
       manage();
-      document.querySelector("#draft")?.focus();
+
+      const refreshedInput = document.querySelector("#draft");
+      refreshedInput?.focus();
+      refreshedInput?.setSelectionRange(cursorPosition, cursorPosition);
     }
 
     if (e.target.id === "exercise-name") {
