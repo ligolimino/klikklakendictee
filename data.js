@@ -1,4 +1,6 @@
 window.LETTERLAB_DATA = {
+  // Basisadres van data.js. Zo vinden subapps dezelfde gedeelde audiomap.
+  baseUrl: new URL(".", document.currentScript.src).href,
   // De dicteewoorden waarmee een nieuwe gebruiker start.
   // 'missing' bevat de posities die de cursist zelf moet typen.
   questions: [
@@ -325,7 +327,6 @@ window.LETTERLAB_DATA = {
     "sound:ij": "assets/audio/klanken/ij-ei.mp3",
     "sound:ei": "assets/audio/klanken/ij-ei.mp3",
     "sound:j": "assets/audio/klanken/j.mp3",
-    "sound:k": "assets/audio/klanken/k.mp3",
     "sound:l": "assets/audio/klanken/l.mp3",
     "sound:m": "assets/audio/klanken/m.mp3",
     "sound:n": "assets/audio/klanken/n.mp3",
@@ -335,7 +336,7 @@ window.LETTERLAB_DATA = {
     "sound:oe": "assets/audio/klanken/oe.mp3",
     "sound:oo": "assets/audio/klanken/oo.mp3",
     "sound:p": "assets/audio/klanken/p.mp3",
-    "sound:r": "assets/audio/klanken/r.mp3",
+    "sound:r": "assets/audio/klanken/rollende_r.mp3",
     "sound:s": "assets/audio/klanken/s.mp3",
     "sound:sch": "assets/audio/klanken/sch.mp3",
     "sound:sl": "assets/audio/klanken/sl.mp3",

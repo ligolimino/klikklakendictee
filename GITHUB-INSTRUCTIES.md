@@ -15,6 +15,12 @@ Na enkele minuten verschijnt bovenaan dezelfde pagina het openbare adres. Dat li
 
 `https://gebruikersnaam.github.io/lws-letterlab/`
 
+De gezamenlijke beheerpagina staat daarna op:
+
+`https://gebruikersnaam.github.io/lws-letterlab/beheer/`
+
+Open die pagina om afzonderlijke links voor dictee- en klik-klakoefeningen te maken.
+
 ## Insluiten in Genially
 
 Gebruik in Genially de optie voor externe inhoud of een iframe en plak de openbare GitHub Pages-link. Geef het kader zoveel mogelijk van de beschikbare breedte en hoogte. Test zowel staand als liggend op een echte smartphone.

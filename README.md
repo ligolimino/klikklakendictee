@@ -108,7 +108,13 @@ De lesgever moet zonder code te wijzigen:
 
 ## 6. Genially-integratie
 
-De cursistentool wordt als openbare webpagina in Genially ingesloten. De cursist ervaart de tool daardoor als onderdeel van de Genially-oefenreeks.
+De cursistentools worden als afzonderlijke openbare webpagina's in Genially ingesloten. De cursist ervaart de gekozen oefening daardoor als onderdeel van de Genially-oefenreeks.
+
+- `dictee/`: uitsluitend het dicteescherm voor cursisten;
+- `klikklak/`: uitsluitend het klik-klakboekje voor cursisten;
+- `beheer/`: één gezamenlijke instelpagina voor de lesgever.
+
+De beheerpagina maakt per klaargezette versie een afzonderlijke cursistenlink. De volledige configuratie zit in die link. Daardoor kunnen verschillende niveaus op verschillende plaatsen in de leerlijn worden gebruikt zonder voor iedere oefening nieuwe programmabestanden te publiceren.
 
 Voor de eerste test wordt GitHub Pages gebruikt:
 
@@ -191,6 +197,9 @@ Een statische oefening kan jarenlang zonder actief beheer blijven werken. Nieuwe
 ## 9. Inhoud van dit GitHub-pakket
 
 - `index.html`: startpagina en toegankelijke SVG-symbolen.
+- `beheer/`: gezamenlijke lesgeverspagina voor beide oefenvormen.
+- `dictee/`: afzonderlijke dictee-app voor cursisten.
+- `klikklak/`: afzonderlijke klik-klak-app voor cursisten.
 - `styles.css`: mobiele en liggende vormgeving.
 - `app.js`: oefenlogica en lokaal lesgeversbeheer.
 - `data.js`: gecontroleerde woordenbank, voorbeeldreeksen en klik-klaksets.
@@ -203,3 +212,13 @@ Een statische oefening kan jarenlang zonder actief beheer blijven werken. Nieuwe
 De GitHub Pages-versie is bedoeld om de bediening en Genially-integratie te testen. Lokale opslag is in deze fase bewust tijdelijk. Centrale synchronisatie, echte Vlaamse spraak en robuuste gedeelde audio-opslag worden pas toegevoegd nadat de cursisteninterface didactisch is goedgekeurd.
 
 De meegeleverde klankopnames zijn gewone MP3-bestanden. Daardoor blijven ze ook bij een latere technische migratie herbruikbaar. De koppelingen staan leesbaar in `data.js`. Alleen de locatie van het audiobestand hoeft later eventueel aangepast te worden.
+
+### Verschillende oefeningen klaarzetten
+
+1. Open `beheer/`.
+2. Geef bovenaan een herkenbare naam uit de leerlijn.
+3. Stel de dicteereeks of de drie klik-klakposities in.
+4. Kies **Dictee klaarzetten** of **Klik-klakboekje klaarzetten**.
+5. Kopieer de ontstane link naar Genially.
+
+Klaargezette oefeningen worden lokaal in de browser van de lesgever onthouden. De cursistenlink zelf blijft zelfstandig werken, ook op een ander toestel. Verwijderen uit het lokale overzicht maakt een eerder gedeelde link niet onbruikbaar.

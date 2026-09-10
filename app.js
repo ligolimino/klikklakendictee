@@ -7,11 +7,13 @@
 
   const DATA = window.LETTERLAB_DATA;
   const app = document.querySelector("#app");
+  const APP_TYPE = document.body.dataset.app || "beheer";
 
   const STORAGE_KEYS = {
     questions: "letterlab-questions-v1",
     custom: "letterlab-custom-words-v1",
     audio: "letterlab-audio-v1",
+    exercises: "letterlab-exercises-v1",
   };
 
   function loadFromStorage(key, fallback) {
@@ -23,10 +25,60 @@
     }
   }
 
+  function decodeExerciseFromUrl() {
+    try {
+      const parameters = new URLSearchParams(location.hash.slice(1));
+      const encodedExercise = parameters.get("oefening");
+
+      if (!encodedExercise) {
+        return null;
+      }
+
+      const base64 = encodedExercise.replace(/-/g, "+").replace(/_/g, "/");
+      const bytes = Uint8Array.from(atob(base64), (character) =>
+        character.charCodeAt(0),
+      );
+
+      return JSON.parse(new TextDecoder().decode(bytes));
+    } catch {
+      return null;
+    }
+  }
+
+  function encodeExercise(exercise) {
+    const bytes = new TextEncoder().encode(JSON.stringify(exercise));
+    let binary = "";
+
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+
+    return btoa(binary)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+  }
+
+  function makeExerciseUrl(type, settings) {
+    const url = new URL(`${type}/`, DATA.baseUrl);
+    url.hash = `oefening=${encodeExercise(settings)}`;
+    return url.href;
+  }
+
+  const sharedExercise = decodeExerciseFromUrl();
+
   // In state bewaren we alles wat tijdens het gebruik kan veranderen.
   const state = {
-    mode: "home",
-    questions: loadFromStorage(STORAGE_KEYS.questions, DATA.questions),
+    mode:
+      APP_TYPE === "dictee"
+        ? "dictation"
+        : APP_TYPE === "klikklak"
+          ? "booklet"
+          : "manage",
+    questions:
+      APP_TYPE === "dictee" && sharedExercise?.questions
+        ? sharedExercise.questions
+        : loadFromStorage(STORAGE_KEYS.questions, DATA.questions),
     customWords: loadFromStorage(STORAGE_KEYS.custom, []),
     audio: loadFromStorage(STORAGE_KEYS.audio, {}),
     currentQuestionIndex: 0,
@@ -37,6 +89,17 @@
     draftWord: "",
     missingGraphemes: new Set(),
     bookPositions: [0, 0, 0],
+    bookGroups:
+      APP_TYPE === "klikklak" && sharedExercise?.groups
+        ? sharedExercise.groups
+        : [DATA.clickBook.begin, DATA.clickBook.kern, DATA.clickBook.einde],
+    exerciseName: "",
+    clickBookDraft: {
+      begin: DATA.clickBook.begin.join(", "),
+      kern: DATA.clickBook.kern.join(", "),
+      einde: DATA.clickBook.einde.join(", "),
+    },
+    exercises: loadFromStorage(STORAGE_KEYS.exercises, []),
     recording: null,
   };
 
@@ -50,6 +113,10 @@
       JSON.stringify(state.customWords),
     );
     localStorage.setItem(STORAGE_KEYS.audio, JSON.stringify(state.audio));
+    localStorage.setItem(
+      STORAGE_KEYS.exercises,
+      JSON.stringify(state.exercises),
+    );
   }
 
   // ================================================================
@@ -86,6 +153,9 @@
   }
 
   function header(showSettings = true) {
+    if (APP_TYPE === "dictee" || APP_TYPE === "klikklak") {
+      return "";
+    }
     let leftSide = '<span class="brand">Letterlab</span>';
     if (state.mode !== "home") {
       leftSide = iconButton("back", "home", "Terug");
@@ -151,7 +221,11 @@
     const selectedAudio = ownAudio(key) || builtInAudio(key);
 
     if (selectedAudio) {
-      new Audio(selectedAudio).play().catch(() => {});
+      const resolvedAudio = selectedAudio.startsWith("data:")
+        ? selectedAudio
+        : new URL(selectedAudio, DATA.baseUrl).href;
+
+      new Audio(resolvedAudio).play().catch(() => {});
       return;
     }
     if (!("speechSynthesis" in window)) {
@@ -267,11 +341,7 @@
   }
 
   function booklet() {
-    const groups = [
-      DATA.clickBook.begin,
-      DATA.clickBook.kern,
-      DATA.clickBook.einde,
-    ];
+    const groups = state.bookGroups;
 
     const parts = groups.map((group, index) => {
       const position = state.bookPositions[index] % group.length;
@@ -462,8 +532,94 @@
       </div>
     </section>`;
   }
+
+  function splitGraphemeList(value) {
+    return value
+      .toLowerCase()
+      .split(",")
+      .map((grapheme) => grapheme.trim())
+      .filter(Boolean);
+  }
+
+  function publishPanel() {
+    return `<section class="panel">
+      <h2>Oefening klaarzetten</h2>
+      <div class="field">
+        <label for="exercise-name">Naam in de leerlijn</label>
+        <input
+          id="exercise-name"
+          class="text-input"
+          value="${escapeHtml(state.exerciseName)}"
+          placeholder="bijvoorbeeld 1.3 – kip"
+        >
+      </div>
+      <div class="publish-actions">
+        <button class="action" data-action="save-dictation">
+          ${icon("keyboard")} Dictee klaarzetten
+        </button>
+      </div>
+    </section>`;
+  }
+
+  function clickBookPanel() {
+    return `<section class="panel">
+      <h2>Klik-klakboekje instellen</h2>
+      <p class="help">Scheid letters en clusters met komma's.</p>
+      <div class="field">
+        <label for="book-begin">Vooraan</label>
+        <input id="book-begin" class="text-input" value="${escapeHtml(state.clickBookDraft.begin)}">
+      </div>
+      <div class="field">
+        <label for="book-kern">Midden</label>
+        <input id="book-kern" class="text-input" value="${escapeHtml(state.clickBookDraft.kern)}">
+      </div>
+      <div class="field">
+        <label for="book-einde">Achteraan</label>
+        <input id="book-einde" class="text-input" value="${escapeHtml(state.clickBookDraft.einde)}">
+      </div>
+      <button class="action" data-action="save-clickbook">
+        ${icon("book")} Klik-klakboekje klaarzetten
+      </button>
+    </section>`;
+  }
+
+  function savedExercisesPanel() {
+    const exerciseList = state.exercises
+      .map(
+        (exercise) => `<div class="exercise-item">
+          <div class="exercise-info">
+            <strong>${escapeHtml(exercise.name)}</strong>
+            <span>${exercise.type === "dictee" ? "Dictee" : "Klik-klak"}</span>
+          </div>
+          <a class="action secondary" href="${escapeHtml(exercise.url)}" target="_blank">Open</a>
+          <button class="action secondary" data-copy-url="${escapeHtml(exercise.url)}">Kopieer link</button>
+          <button class="icon-btn" data-delete-exercise="${exercise.id}" aria-label="Verwijder">
+            ${icon("close")}
+          </button>
+        </div>`,
+      )
+      .join("");
+
+    return `<section class="panel">
+      <h2>Klaargezette oefeningen</h2>
+      <div class="exercise-list">
+        ${exerciseList || '<div class="empty">Nog geen aparte oefeningen.</div>'}
+      </div>
+    </section>`;
+  }
+
   function manage() {
-    app.innerHTML = `${header(false)}<main class="teacher"><h1>Instellingen voor de lesgever</h1>${manualPanel()}${generatorPanel()}${seriesPanel()}${audioPanel()}</main>`;
+    app.innerHTML = `${header(false)}
+      <main class="teacher">
+        <h1>Instellingen voor de lesgever</h1>
+        ${publishPanel()}
+        ${manualPanel()}
+        ${generatorPanel()}
+        ${seriesPanel()}
+        ${clickBookPanel()}
+        ${savedExercisesPanel()}
+        ${audioPanel()}
+      </main>`;
   }
   function render() {
     const screens = {
@@ -533,6 +689,48 @@
     saveToStorage();
   }
 
+  function saveExercise(type) {
+    const name = state.exerciseName.trim() || `Nieuwe ${type}`;
+    let settings;
+
+    if (type === "dictee") {
+      settings = {
+        type: "dictee",
+        name: name,
+        questions: state.questions,
+      };
+    } else {
+      const groups = [
+        splitGraphemeList(state.clickBookDraft.begin),
+        splitGraphemeList(state.clickBookDraft.kern),
+        splitGraphemeList(state.clickBookDraft.einde),
+      ];
+
+      if (groups.some((group) => group.length === 0)) {
+        alert("Vul voor elke plaats minstens één letter of klank in.");
+        return;
+      }
+
+      settings = {
+        type: "klikklak",
+        name: name,
+        groups: groups,
+      };
+    }
+
+    const url = makeExerciseUrl(type, settings);
+    state.exercises.push({
+      id: Date.now(),
+      name: name,
+      type: type,
+      url: url,
+    });
+
+    state.exerciseName = "";
+    saveToStorage();
+    manage();
+  }
+
   // ================================================================
   // 7. GEBEURTENISSEN: TYPEN, KIEZEN EN KLIKKEN
   // ================================================================
@@ -543,6 +741,22 @@
       state.missingGraphemes.clear();
       manage();
       document.querySelector("#draft")?.focus();
+    }
+
+    if (e.target.id === "exercise-name") {
+      state.exerciseName = e.target.value;
+    }
+
+    if (e.target.id === "book-begin") {
+      state.clickBookDraft.begin = e.target.value;
+    }
+
+    if (e.target.id === "book-kern") {
+      state.clickBookDraft.kern = e.target.value;
+    }
+
+    if (e.target.id === "book-einde") {
+      state.clickBookDraft.einde = e.target.value;
     }
   });
   app.addEventListener("change", (e) => {
@@ -561,9 +775,31 @@
   });
   app.addEventListener("click", (e) => {
     const target = e.target.closest(
-      "button,[data-action],[data-sound],[data-key],[data-book],[data-missing],[data-pattern],[data-learned],[data-suggest]",
+      "button,[data-action],[data-sound],[data-key],[data-book],[data-missing],[data-pattern],[data-learned],[data-suggest],[data-copy-url],[data-delete-exercise]",
     );
     if (!target) return;
+
+    if (target.dataset.copyUrl) {
+      navigator.clipboard
+        .writeText(target.dataset.copyUrl)
+        .then(() => {
+          target.textContent = "Gekopieerd";
+        })
+        .catch(() => {
+          prompt("Kopieer deze link:", target.dataset.copyUrl);
+        });
+      return;
+    }
+
+    if (target.dataset.deleteExercise) {
+      const id = Number(target.dataset.deleteExercise);
+      state.exercises = state.exercises.filter(
+        (exercise) => exercise.id !== id,
+      );
+      saveToStorage();
+      manage();
+      return;
+    }
     if (target.dataset.key && !state.result) {
       state.typed += target.dataset.key;
 
@@ -587,11 +823,7 @@
     }
     if (target.dataset.book !== undefined) {
       const columnIndex = Number(target.dataset.book);
-      const groups = [
-        DATA.clickBook.begin,
-        DATA.clickBook.kern,
-        DATA.clickBook.einde,
-      ];
+      const groups = state.bookGroups;
       const group = groups[columnIndex];
       const direction = Number(target.dataset.delta);
 
@@ -688,6 +920,10 @@
       manage();
     } else if (action === "record") {
       record();
+    } else if (action === "save-dictation") {
+      saveExercise("dictee");
+    } else if (action === "save-clickbook") {
+      saveExercise("klikklak");
     }
   });
 

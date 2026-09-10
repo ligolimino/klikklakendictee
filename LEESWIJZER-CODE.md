@@ -97,6 +97,12 @@ const sentence = `<p>Hallo ${name}</p>`;
 
 `localStorage` bewaart gegevens in de browser. Daarom blijven lokaal toegevoegde woorden na het sluiten van de pagina bestaan. Ze worden in deze proefversie nog niet naar GitHub of naar andere toestellen verstuurd.
 
+### Instellingen in een cursistenlink
+
+Een klaargezette oefening wordt met `encodeExercise()` omgezet naar compacte tekst in de link. De dictee- of klik-klakpagina zet die tekst met `decodeExerciseFromUrl()` terug om naar instellingen. Zo kan één gepubliceerde app veel verschillende oefeningen openen zonder database.
+
+In een grotere productieomgeving zouden oefeningen meestal centraal in een database staan en alleen een korte identificatiecode in de link krijgen. De huidige oplossing is bewust zelfstandig en geschikt voor de GitHub-proef.
+
 ## Goede werkwijze bij zelf aanpassen
 
 1. Bewaar eerst een kopie van de werkende versie.

@@ -473,6 +473,41 @@ button {
   text-align: center;
   color: #6d7f88;
 }
+.publish-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.exercise-list {
+  display: grid;
+  gap: 10px;
+}
+.exercise-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f3f8f8;
+}
+.exercise-info {
+  flex: 1;
+  display: grid;
+}
+.exercise-info span {
+  color: #5c7280;
+  font-size: 0.9rem;
+}
+.exercise-item .action {
+  text-decoration: none;
+}
+.exercise-item .icon-btn {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  background: #fee7ed;
+  color: var(--bad);
+}
 
 /* ================================================================
    8. Aanpassingen voor kleine en liggende schermen
@@ -510,6 +545,13 @@ button {
   }
   .panel {
     padding: 14px;
+  }
+  .exercise-item {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .exercise-info {
+    flex-basis: 100%;
   }
 }
 @media (orientation: landscape) and (max-height: 620px) {
