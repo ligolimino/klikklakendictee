@@ -78,7 +78,7 @@ button {
 
 .topbar {
   height: 68px;
-  padding: 8px max(14px, env(safe-area-inset-left));
+  padding: 8px max(12px, env(safe-area-inset-left));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -129,8 +129,8 @@ button {
 .screen {
   width: min(100%, 980px);
   margin: auto;
-  padding: 20px max(16px, env(safe-area-inset-left))
-    calc(22px + env(safe-area-inset-bottom));
+  padding: 10px max(14px, env(safe-area-inset-left))
+    calc(18px + env(safe-area-inset-bottom));
 }
 .home-grid {
   display: grid;
@@ -165,7 +165,7 @@ button {
 .dictation {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 8px;
   align-items: center;
 }
 .dictation-finished {
@@ -174,7 +174,7 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 12px;
   text-align: center;
 }
 .finished-check {
@@ -202,9 +202,9 @@ button {
   height: 36px;
 }
 .restart-button {
-  margin-top: 18px;
-  width: 58px;
-  height: 58px;
+  margin-top: 12px;
+  width: 45px;
+  height: 45px;
   border: 0;
   border-radius: 50%;
   background: var(--blue);
@@ -232,8 +232,15 @@ button {
   width: 42px;
   height: 42px;
 }
+.dictation-image {
+  display: block;
+  max-width: min(100%, 320px);
+  max-height: min(30svh, 210px);
+  object-fit: contain;
+  border-radius: 12px;
+}
 .word-slots {
-  min-height: 90px;
+  min-height: 64px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -242,7 +249,7 @@ button {
 }
 .slot {
   min-width: 54px;
-  padding: 8px 8px 4px;
+  padding: 3px 8px 2px;
   border-bottom: 5px solid var(--teal);
   font-size: clamp(2.3rem, 10vw, 4.8rem);
   line-height: 1;
@@ -271,7 +278,7 @@ button {
   }
 }
 .feedback {
-  height: 58px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -296,22 +303,23 @@ button {
 }
 .key-row {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   justify-content: center;
 }
 .key {
+  /* Andika Regular blijft leesbaar zonder dat de toets zwaar oogt. */
+  font-family: Andika, Arial, sans-serif;
+  font-weight: 400;
   flex: 1;
   max-width: 68px;
   min-width: 0;
-  height: clamp(46px, 8.6vh, 66px);
+  min-height: 54px;
   border: 1px solid #b8d4d7;
-  border-bottom-width: 4px;
+  border-bottom-width: 2px;
   border-radius: 12px;
   background: #fff;
   color: var(--ink);
-  font-size: clamp(1.25rem, 5vw, 1.75rem);
-   font-family: Andika, Arial, sans-serif;
-  font-weight: 400;
+  font-size: clamp(1.4rem, 5.5vw, 1.75rem);
 }
 .key:active {
   transform: translateY(2px);
@@ -496,6 +504,15 @@ button {
   background: #fee7ed;
   color: var(--bad);
 }
+.series-item {
+  flex-wrap: wrap;
+}
+.series-image-field {
+  flex-basis: 100%;
+  display: grid;
+  gap: 4px;
+  font-size: 0.9rem;
+}
 .suggestions {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -565,7 +582,13 @@ button {
 
 @media (max-width: 560px) {
   .screen {
-    padding-top: 14px;
+    padding-top: 10px;
+  }
+  .screen.dictation {
+    /* Bewaar wat ruimte naast het kader, maar geef de toetsen daarbinnen
+       zo veel mogelijk breedte. De AZERTY-rijen blijven ongewijzigd. */
+    padding-right: 8px;
+    padding-left: 8px;
   }
   .topbar {
     height: 62px;
@@ -594,7 +617,7 @@ button {
     min-width: 42px;
   }
   .panel {
-    padding: 14px;
+    padding: 8px;
   }
   .exercise-item {
     align-items: stretch;
@@ -613,11 +636,11 @@ button {
     height: 40px;
   }
   .screen {
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
   }
   .dictation {
-    gap: 8px;
+    gap: 6px;
   }
   .listen {
     width: 58px;
@@ -638,7 +661,7 @@ button {
     height: 40px;
   }
   .key {
-    height: 40px;
+    min-height: 44px;
   }
   .booklet {
     grid-template-columns: 1fr 2fr;
