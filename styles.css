@@ -313,6 +313,8 @@ button {
   flex: 1;
   max-width: 68px;
   min-width: 0;
+  padding-right: 0;
+  padding-left: 0;
   min-height: 54px;
   border: 1px solid #b8d4d7;
   border-bottom-width: 2px;
@@ -320,6 +322,10 @@ button {
   background: #fff;
   color: var(--ink);
   font-size: clamp(1.4rem, 5.5vw, 1.75rem);
+}
+/* De brede m krijgt iets kleinere letters, maar behoudt dezelfde aantikzone. */
+.key[data-key="m"] {
+  font-size: clamp(1.18rem, 4.7vw, 1.55rem);
 }
 .key:active {
   transform: translateY(2px);
@@ -585,10 +591,11 @@ button {
     padding-top: 10px;
   }
   .screen.dictation {
-    /* Bewaar wat ruimte naast het kader, maar geef de toetsen daarbinnen
-       zo veel mogelijk breedte. De AZERTY-rijen blijven ongewijzigd. */
-    padding-right: 8px;
-    padding-left: 8px;
+    /* Bijna geen binnenmarge: de tien AZERTY-toetsen krijgen zo meer breedte.
+       Vrije ruimte voor Genially maak je buiten het iframe, niet hier. */
+    padding-right: max(4px, env(safe-area-inset-right));
+    padding-left: max(4px, env(safe-area-inset-left));
+    padding-bottom: calc(6px + env(safe-area-inset-bottom));
   }
   .topbar {
     height: 62px;
