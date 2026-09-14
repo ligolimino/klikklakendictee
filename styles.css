@@ -806,3 +806,108 @@ button {
     font-size: 4rem;
   }
 }
+
+
+/* Houd het volledige dictee zichtbaar op kleinere telefoons en in Genially. */
+@media (max-height: 740px) {
+  .screen.dictation {
+    height: 100svh;
+    min-height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 5px;
+    padding-bottom: calc(5px + env(safe-area-inset-bottom));
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .dictation .listen {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    flex: 0 0 auto;
+  }
+
+  .dictation .listen .icon {
+    width: 29px;
+    height: 29px;
+  }
+
+  .dictation-image {
+    max-width: min(58vw, 250px);
+    max-height: 15svh;
+    margin-bottom: 2px;
+  }
+
+  .copy-word {
+    margin-bottom: 2px;
+    font-size: clamp(1.65rem, 7vw, 2.4rem);
+    line-height: 1;
+  }
+
+  .word-slots {
+    min-height: 45px;
+    gap: 5px;
+  }
+
+  .slot {
+    min-width: 38px;
+    padding: 2px 5px 1px;
+    border-bottom-width: 3px;
+    font-size: clamp(1.8rem, 8vw, 2.7rem);
+  }
+
+  .feedback {
+    height: 38px;
+  }
+
+  .feedback .icon-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .keyboard {
+    gap: 3px;
+  }
+
+  .key-row {
+    gap: 3px;
+  }
+
+  .key {
+    min-height: 46px;
+    border-radius: 9px;
+    font-size: clamp(1.2rem, 5vw, 1.55rem);
+  }
+}
+
+@media (max-height: 590px) {
+  .dictation .listen {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dictation-image {
+    max-height: 12svh;
+  }
+
+  .copy-word {
+    font-size: 1.55rem;
+  }
+
+  .word-slots {
+    min-height: 39px;
+  }
+
+  .slot {
+    font-size: 1.75rem;
+  }
+
+  .feedback {
+    height: 34px;
+  }
+
+  .key {
+    min-height: 42px;
+  }
+}
