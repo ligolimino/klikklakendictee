@@ -118,7 +118,6 @@
     },
     exercises: loadFromStorage(STORAGE_KEYS.exercises, []),
     recording: null,
-    showCopyWord: false,
     editingExerciseId: null,
     publicationMessage: "",
   };
@@ -291,7 +290,10 @@
       return;
     }
     const question = getCurrentQuestion();
-    const showCopyWord = sharedExercise?.showCopyWord === true;
+    // Nieuwe links bewaren de keuze per vraag. De tweede waarde houdt
+    // eerder gemaakte links met één algemene keuze werkend.
+    const showCopyWord =
+      question.showCopyWord ?? (sharedExercise?.showCopyWord === true);
     const missingOrder = question.missing;
     const typedChunks = {};
 
@@ -352,6 +354,7 @@
         <button class="listen" data-action="speak-word" aria-label="Luister">
           ${icon("speaker")}
         </button>
+        ${question.image ? `<img class="dictation-image" src="${escapeHtml(question.image)}" alt="">` : ""}
         ${showCopyWord ? `<div class="copy-word">${escapeHtml(question.word)}</div>` : ""}
         <div class="word-slots">${slots}</div>
         ${feedback}
@@ -571,6 +574,19 @@
                   )
                   .join("")}
               </div>
+              <label class="question-option">
+                <input type="checkbox" data-question-example="${index}"
+                  ${question.showCopyWord ? "checked" : ""}>
+                Toon voorbeeldwoord
+              </label>
+              <div class="question-image-tools">
+                ${question.image ? `<img class="question-image-preview" src="${escapeHtml(question.image)}" alt="Voorbeeldafbeelding">` : ""}
+                <label class="action secondary image-picker">
+                  ${icon("upload")} ${question.image ? "Vervang afbeelding" : "Kies afbeelding"}
+                  <input type="file" accept="image/*" data-question-image="${index}" hidden>
+                </label>
+                ${question.image ? `<button class="action secondary" data-remove-image="${index}">Verwijder afbeelding</button>` : ""}
+              </div>
             </div>
             <span class="series-pattern">${patternOf(question.word)}</span>
             ${iconButton("close", `remove:${index}`, `Verwijder ${question.word}`)}
@@ -615,10 +631,6 @@
           placeholder="bijvoorbeeld 1.3 – kip"
         >
       </div>
-      <label class="check-option">
-        <input id="show-copy-word" type="checkbox" ${state.showCopyWord ? "checked" : ""}>
-        Toon het volledige woord om over te schrijven
-      </label>
       <div class="publish-actions">
         <button class="action" data-action="save-dictation">
           ${icon("keyboard")} Dictee klaarzetten
@@ -745,7 +757,13 @@
     if (!graphemes.length) return;
     const indexes = missing?.length ? missing : [...graphemes.keys()];
     // Elke toevoeging is een aparte vraag, ook als hetzelfde woord al voorkomt.
-    state.questions.push({ word, graphemes, missing: indexes });
+    state.questions.push({
+      word,
+      graphemes,
+      missing: indexes,
+      showCopyWord: false,
+      image: "",
+    });
     const isNewCustomWord =
       !DATA.wordBank.includes(word) && !state.customWords.includes(word);
 
@@ -766,6 +784,34 @@
     manage();
   }
 
+  function makeSmallImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("De afbeelding kon niet worden gelezen."));
+      reader.onload = () => {
+        const image = new Image();
+        image.onerror = () => reject(new Error("Dit afbeeldingsbestand wordt niet ondersteund."));
+        image.onload = () => {
+          const maximumSize = 360;
+          const scale = Math.min(
+            1,
+            maximumSize / image.naturalWidth,
+            maximumSize / image.naturalHeight,
+          );
+          const width = Math.max(1, Math.round(image.naturalWidth * scale));
+          const height = Math.max(1, Math.round(image.naturalHeight * scale));
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext("2d").drawImage(image, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/webp", 0.7));
+        };
+        image.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   function saveExercise(type) {
     const name = state.exerciseName.trim() || `Nieuwe ${type}`;
     let settings;
@@ -778,8 +824,9 @@
           word: question.word,
           graphemes: [...question.graphemes],
           missing: [...question.missing],
+          showCopyWord: question.showCopyWord === true,
+          image: question.image || "",
         })),
-        showCopyWord: state.showCopyWord,
       };
     } else {
       const groups = [
@@ -845,8 +892,12 @@
       state.exerciseName = e.target.value;
     }
 
-    if (e.target.id === "show-copy-word") {
-      state.showCopyWord = e.target.checked;
+    if (e.target.dataset.questionExample !== undefined) {
+      const question = state.questions[Number(e.target.dataset.questionExample)];
+      if (question) {
+        question.showCopyWord = e.target.checked;
+        saveToStorage();
+      }
     }
 
     if (e.target.id === "book-begin") {
@@ -862,6 +913,19 @@
     }
   });
   app.addEventListener("change", (e) => {
+    if (e.target.dataset.questionImage !== undefined && e.target.files[0]) {
+      const questionIndex = Number(e.target.dataset.questionImage);
+      makeSmallImage(e.target.files[0])
+        .then((smallImage) => {
+          const question = state.questions[questionIndex];
+          if (!question) return;
+          question.image = smallImage;
+          saveToStorage();
+          manage();
+        })
+        .catch((error) => alert(error.message));
+      return;
+    }
     if (e.target.id === "audio-file" && e.target.files[0]) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -877,7 +941,7 @@
   });
   app.addEventListener("click", (e) => {
     const target = e.target.closest(
-      "button,[data-action],[data-sound],[data-key],[data-book],[data-missing],[data-series-missing],[data-pattern],[data-learned],[data-suggest],[data-copy-url],[data-delete-exercise],[data-edit-exercise]",
+      "button,[data-action],[data-sound],[data-key],[data-book],[data-missing],[data-series-missing],[data-pattern],[data-learned],[data-suggest],[data-copy-url],[data-delete-exercise],[data-edit-exercise],[data-remove-image]",
     );
     if (!target) return;
 
@@ -902,6 +966,15 @@
       manage();
       return;
     }
+    if (target.dataset.removeImage !== undefined) {
+      const question = state.questions[Number(target.dataset.removeImage)];
+      if (question) {
+        question.image = "";
+        saveToStorage();
+        manage();
+      }
+      return;
+    }
     if (target.dataset.editExercise) {
       const id = Number(target.dataset.editExercise);
       const exercise = state.exercises.find((item) => item.id === id);
@@ -919,9 +992,11 @@
         word: question.word,
         graphemes: [...question.graphemes],
         missing: [...question.missing],
+        showCopyWord:
+          question.showCopyWord ?? (settings.showCopyWord === true),
+        image: question.image || "",
       }));
       state.exerciseName = exercise.name;
-      state.showCopyWord = settings.showCopyWord === true;
       state.editingExerciseId = id;
       state.publicationMessage = "";
       saveToStorage();

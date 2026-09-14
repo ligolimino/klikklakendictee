@@ -285,6 +285,51 @@ button {
   accent-color: var(--teal);
 }
 
+.question-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.question-option input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--teal);
+}
+
+.question-image-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.question-image-preview {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: contain;
+  background: white;
+  border: 1px solid var(--line);
+}
+
+.image-picker {
+  cursor: pointer;
+}
+
+.dictation-image {
+  display: block;
+  max-width: min(68vw, 360px);
+  max-height: min(30vh, 360px);
+  margin: 0 auto 10px;
+  border-radius: 16px;
+  object-fit: contain;
+}
+
 .series-item-editable {
   align-items: center;
 }
