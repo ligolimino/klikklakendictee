@@ -45,6 +45,23 @@
     }
   }
 
+  function decodeExerciseFromUrlString(url) {
+    try {
+      const exerciseUrl = new URL(url);
+      const parameters = new URLSearchParams(exerciseUrl.hash.slice(1));
+      const encodedExercise = parameters.get("oefening");
+      if (!encodedExercise) return null;
+
+      const base64 = encodedExercise.replace(/-/g, "+").replace(/_/g, "/");
+      const bytes = Uint8Array.from(atob(base64), (character) =>
+        character.charCodeAt(0),
+      );
+      return JSON.parse(new TextDecoder().decode(bytes));
+    } catch {
+      return null;
+    }
+  }
+
   function encodeExercise(exercise) {
     const bytes = new TextEncoder().encode(JSON.stringify(exercise));
     let binary = "";
@@ -101,6 +118,9 @@
     },
     exercises: loadFromStorage(STORAGE_KEYS.exercises, []),
     recording: null,
+    showCopyWord: false,
+    editingExerciseId: null,
+    publicationMessage: "",
   };
 
   function saveToStorage() {
@@ -271,6 +291,7 @@
       return;
     }
     const question = getCurrentQuestion();
+    const showCopyWord = sharedExercise?.showCopyWord === true;
     const missingOrder = question.missing;
     const typedChunks = {};
 
@@ -331,6 +352,7 @@
         <button class="listen" data-action="speak-word" aria-label="Luister">
           ${icon("speaker")}
         </button>
+        ${showCopyWord ? `<div class="copy-word">${escapeHtml(question.word)}</div>` : ""}
         <div class="word-slots">${slots}</div>
         ${feedback}
         <div class="keyboard">
@@ -454,16 +476,11 @@
     const suggestion =
       availableWords
         .map((word) => {
-          const isAdded = state.questions.some(
-            (question) => question.word === word,
-          );
-
           return `<button
-            class="suggestion ${isAdded ? "added" : ""}"
+            class="suggestion"
             data-suggest="${escapeHtml(word)}"
-            ${isAdded ? "disabled" : ""}
           >
-            ${isAdded ? icon("check") : icon("plus")}
+            ${icon("plus")}
             ${escapeHtml(word)}
           </button>`;
         })
@@ -538,8 +555,23 @@
     const list = state.questions
       .map(
         (question, index) =>
-          `<div class="series-item">
-            <span class="series-word">${escapeHtml(question.word)}</span>
+          `<div class="series-item series-item-editable">
+            <div class="series-order">
+              ${iconButton("up", `move-up:${index}`, `Verplaats ${question.word} omhoog`)}
+              ${iconButton("down", `move-down:${index}`, `Verplaats ${question.word} omlaag`)}
+            </div>
+            <div class="series-question">
+              <span class="series-word">${escapeHtml(question.word)}</span>
+              <div class="series-missing" aria-label="Ontbrekende letters kiezen">
+                ${question.graphemes
+                  .map(
+                    (grapheme, graphemeIndex) =>
+                      `<button class="chip missing-choice ${question.missing.includes(graphemeIndex) ? "active" : ""}"
+                        data-series-missing="${index}:${graphemeIndex}">${escapeHtml(grapheme)}</button>`,
+                  )
+                  .join("")}
+              </div>
+            </div>
             <span class="series-pattern">${patternOf(question.word)}</span>
             ${iconButton("close", `remove:${index}`, `Verwijder ${question.word}`)}
           </div>`,
@@ -563,8 +595,17 @@
   }
 
   function publishPanel() {
+    const editingText = state.editingExerciseId
+      ? `<div class="edit-notice">Je bewerkt een opgeslagen dictee. Bij opnieuw klaarzetten krijg je een nieuwe link. Vervang daarna de oude link in Genially. De oude link blijft werken.</div>`
+      : "";
+    const publicationMessage = state.publicationMessage
+      ? `<div class="publication-message">${escapeHtml(state.publicationMessage)}</div>`
+      : "";
+
     return `<section class="panel">
       <h2>Oefening klaarzetten</h2>
+      ${editingText}
+      ${publicationMessage}
       <div class="field">
         <label for="exercise-name">Naam in de leerlijn</label>
         <input
@@ -574,6 +615,10 @@
           placeholder="bijvoorbeeld 1.3 – kip"
         >
       </div>
+      <label class="check-option">
+        <input id="show-copy-word" type="checkbox" ${state.showCopyWord ? "checked" : ""}>
+        Toon het volledige woord om over te schrijven
+      </label>
       <div class="publish-actions">
         <button class="action" data-action="save-dictation">
           ${icon("keyboard")} Dictee klaarzetten
@@ -614,6 +659,7 @@
           </div>
           <a class="action secondary" href="${escapeHtml(exercise.url)}" target="_blank">Open</a>
           <button class="action secondary" data-copy-url="${escapeHtml(exercise.url)}">Kopieer link</button>
+          ${exercise.type === "dictee" ? `<button class="action secondary" data-edit-exercise="${exercise.id}">Bewerk</button>` : ""}
           <button class="icon-btn" data-delete-exercise="${exercise.id}" aria-label="Verwijder">
             ${icon("close")}
           </button>
@@ -698,8 +744,8 @@
     const graphemes = tokenize(word);
     if (!graphemes.length) return;
     const indexes = missing?.length ? missing : [...graphemes.keys()];
-    if (!state.questions.some((q) => q.word === word))
-      state.questions.push({ word, graphemes, missing: indexes });
+    // Elke toevoeging is een aparte vraag, ook als hetzelfde woord al voorkomt.
+    state.questions.push({ word, graphemes, missing: indexes });
     const isNewCustomWord =
       !DATA.wordBank.includes(word) && !state.customWords.includes(word);
 
@@ -710,6 +756,16 @@
     saveToStorage();
   }
 
+  function moveQuestion(index, direction) {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= state.questions.length) return;
+
+    const [question] = state.questions.splice(index, 1);
+    state.questions.splice(newIndex, 0, question);
+    saveToStorage();
+    manage();
+  }
+
   function saveExercise(type) {
     const name = state.exerciseName.trim() || `Nieuwe ${type}`;
     let settings;
@@ -718,7 +774,12 @@
       settings = {
         type: "dictee",
         name: name,
-        questions: state.questions,
+        questions: state.questions.map((question) => ({
+          word: question.word,
+          graphemes: [...question.graphemes],
+          missing: [...question.missing],
+        })),
+        showCopyWord: state.showCopyWord,
       };
     } else {
       const groups = [
@@ -745,8 +806,16 @@
       name: name,
       type: type,
       url: url,
+      settings: settings,
     });
 
+    if (state.editingExerciseId) {
+      state.publicationMessage =
+        "Nieuwe link gemaakt. Vervang de oude link in Genially; de oude link blijft werken.";
+    } else {
+      state.publicationMessage = "Oefening en link zijn opgeslagen.";
+    }
+    state.editingExerciseId = null;
     state.exerciseName = "";
     saveToStorage();
     manage();
@@ -774,6 +843,10 @@
 
     if (e.target.id === "exercise-name") {
       state.exerciseName = e.target.value;
+    }
+
+    if (e.target.id === "show-copy-word") {
+      state.showCopyWord = e.target.checked;
     }
 
     if (e.target.id === "book-begin") {
@@ -804,7 +877,7 @@
   });
   app.addEventListener("click", (e) => {
     const target = e.target.closest(
-      "button,[data-action],[data-sound],[data-key],[data-book],[data-missing],[data-pattern],[data-learned],[data-suggest],[data-copy-url],[data-delete-exercise]",
+      "button,[data-action],[data-sound],[data-key],[data-book],[data-missing],[data-series-missing],[data-pattern],[data-learned],[data-suggest],[data-copy-url],[data-delete-exercise],[data-edit-exercise]",
     );
     if (!target) return;
 
@@ -825,6 +898,32 @@
       state.exercises = state.exercises.filter(
         (exercise) => exercise.id !== id,
       );
+      saveToStorage();
+      manage();
+      return;
+    }
+    if (target.dataset.editExercise) {
+      const id = Number(target.dataset.editExercise);
+      const exercise = state.exercises.find((item) => item.id === id);
+      if (!exercise) return;
+
+      // Oudere opgeslagen oefeningen hadden nog geen apart settings-veld.
+      const settings =
+        exercise.settings || decodeExerciseFromUrlString(exercise.url);
+      if (!settings?.questions) {
+        alert("Deze oefening kon niet worden ingelezen.");
+        return;
+      }
+
+      state.questions = settings.questions.map((question) => ({
+        word: question.word,
+        graphemes: [...question.graphemes],
+        missing: [...question.missing],
+      }));
+      state.exerciseName = exercise.name;
+      state.showCopyWord = settings.showCopyWord === true;
+      state.editingExerciseId = id;
+      state.publicationMessage = "";
       saveToStorage();
       manage();
       return;
@@ -872,6 +971,28 @@
         state.missingGraphemes.add(index);
       }
 
+      manage();
+      return;
+    }
+    if (target.dataset.seriesMissing) {
+      const [questionIndex, graphemeIndex] = target.dataset.seriesMissing
+        .split(":")
+        .map(Number);
+      const question = state.questions[questionIndex];
+      if (!question) return;
+
+      if (question.missing.includes(graphemeIndex)) {
+        if (question.missing.length > 1) {
+          question.missing = question.missing.filter(
+            (index) => index !== graphemeIndex,
+          );
+        }
+      } else {
+        question.missing = [...question.missing, graphemeIndex].sort(
+          (a, b) => a - b,
+        );
+      }
+      saveToStorage();
       manage();
       return;
     }
@@ -952,6 +1073,10 @@
       state.currentQuestionIndex = 0;
       saveToStorage();
       manage();
+    } else if (action?.startsWith("move-up:")) {
+      moveQuestion(Number(action.split(":")[1]), -1);
+    } else if (action?.startsWith("move-down:")) {
+      moveQuestion(Number(action.split(":")[1]), 1);
     } else if (action === "record") {
       record();
     } else if (action === "save-dictation") {

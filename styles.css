@@ -247,6 +247,76 @@ button {
   gap: 10px;
   flex-wrap: wrap;
 }
+
+.copy-word {
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-size: clamp(2rem, 9vw, 4.5rem);
+  font-weight: 700;
+  text-align: center;
+}
+
+.edit-notice,
+.publication-message {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fff3c4;
+  color: #533f00;
+  line-height: 1.45;
+}
+
+.publication-message {
+  background: #daf4ee;
+  color: #174b41;
+}
+
+.check-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  font-weight: 700;
+}
+
+.check-option input {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--teal);
+}
+
+.series-item-editable {
+  align-items: center;
+}
+
+.series-order {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.series-order .icon-btn {
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.series-question {
+  flex: 1;
+  min-width: 0;
+}
+
+.series-missing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.series-missing .chip {
+  min-width: 38px;
+  min-height: 38px;
+  padding: 5px 9px;
+}
 .slot {
   min-width: 54px;
   padding: 3px 8px 2px;
