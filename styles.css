@@ -168,6 +168,55 @@ button {
   gap: 18px;
   align-items: center;
 }
+.dictation-finished {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  text-align: center;
+}
+.finished-check {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--good);
+  color: white;
+}
+.finished-check .icon {
+  width: 65px;
+  height: 65px;
+}
+.dictation-finished h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 9vw, 4rem);
+}
+.finished-next {
+  color: var(--teal-dark);
+}
+.finished-next .icon {
+  width: 36px;
+  height: 36px;
+}
+.restart-button {
+  margin-top: 18px;
+  width: 58px;
+  height: 58px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--blue);
+  color: var(--teal-dark);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.restart-button .icon {
+  width: 30px;
+  height: 30px;
+}
 .listen {
   width: 84px;
   height: 84px;

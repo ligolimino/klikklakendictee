@@ -266,6 +266,10 @@
       home();
       return;
     }
+    if (state.currentQuestionIndex >= state.questions.length) {
+      dictationFinished();
+      return;
+    }
     const question = getCurrentQuestion();
     const missingOrder = question.missing;
     const typedChunks = {};
@@ -337,6 +341,23 @@
             </button>
           </div>
         </div>
+      </section>`;
+  }
+
+  function dictationFinished() {
+    // De app weet niet welke Genially-pagina na deze oefening komt.
+    // De pijl is daarom een aanwijzing, geen link naar een onbekende pagina.
+    app.innerHTML = `${header()}
+      <section class="screen dictation-finished" aria-label="Dictee afgerond">
+        <div class="finished-check" aria-hidden="true">${icon("check")}</div>
+        <h1>Klaar!</h1>
+        <div class="finished-next" aria-hidden="true">
+          ${icon("next")}
+        </div>
+        <button class="restart-button" data-action="restart-dictation"
+          aria-label="Oefening opnieuw doen" title="Oefening opnieuw doen">
+          ${icon("retry")}
+        </button>
       </section>`;
   }
 
@@ -903,8 +924,13 @@
       state.result = "";
       dictation();
     } else if (action === "next-question") {
-      state.currentQuestionIndex =
-        (state.currentQuestionIndex + 1) % state.questions.length;
+      // Na het laatste woord tonen we een eindscherm in plaats van te herbeginnen.
+      state.currentQuestionIndex += 1;
+      state.typed = "";
+      state.result = "";
+      dictation();
+    } else if (action === "restart-dictation") {
+      state.currentQuestionIndex = 0;
       state.typed = "";
       state.result = "";
       dictation();
