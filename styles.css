@@ -285,8 +285,21 @@ button {
   gap: 14px;
 }
 .feedback .icon {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
+}
+.feedback .icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+.feedback .icon-btn .icon {
+  width: 25px;
+  height: 25px;
+}
+.feedback .icon-btn.bad {
+  background: #fee7ed;
+  color: var(--bad);
 }
 .feedback.good {
   color: var(--good);
